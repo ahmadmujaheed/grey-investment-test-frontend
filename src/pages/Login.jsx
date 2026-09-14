@@ -86,7 +86,7 @@ const Login = () => {
             {/* Header / Logo */}
             <div className="mb-8 lg:mb-10">
               <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                Grey <span className="text-[#34D399]">Investment</span>
+                Grey <span className="text-[#34D399]">Investment Test</span>
               </h2>
 
               <p className="text-[#9CA3AF] mt-2 text-xs sm:text-sm font-medium">
