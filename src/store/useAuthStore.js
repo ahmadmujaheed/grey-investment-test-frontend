@@ -3,8 +3,8 @@ import axios from "axios";
 
 export const useAuthStore = create((set, get) => ({
   // Base config parameters
-  // baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
-   baseUrl: import.meta.env.VITE_API_BASE_URL || "https://grey-investment-server.onrender.com/api",
+  baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+  //  baseUrl: import.meta.env.VITE_API_BASE_URL || "https://grey-investment-test-backend.onrender.com/api",
   
   // Auth state variables - Now pulling safely from sessionStorage
   token: sessionStorage.getItem("auth_token") || null,
