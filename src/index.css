@@ -580,3 +580,88 @@ code {
   .investment-statement-page .ant-tag { background: #fff !important; border: 1px solid #9ca3af !important; color: #111827 !important; font-size: 6px !important; padding: 1px 4px !important; }
   .investment-statement-page svg { display: none !important; }
 }
+
+
+/* Responsive application layout */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+.responsive-clickable-row {
+  cursor: pointer;
+  outline: none;
+}
+
+.responsive-clickable-row:focus-visible {
+  outline: 2px solid #34D399;
+  outline-offset: -2px;
+}
+
+@media (max-width: 767px) {
+  .responsive-clickable-row {
+    cursor: pointer;
+  }
+
+  .responsive-clickable-row td {
+    padding: 0.75rem !important;
+  }
+
+  /* Let wide data tables scroll instead of breaking the page. */
+  .overflow-x-auto {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    max-width: none;
+  }
+
+  /* Prevent long emails, IDs and URLs from stretching cards. */
+  td,
+  th,
+  p,
+  span,
+  a {
+    overflow-wrap: anywhere;
+  }
+
+  .ant-modal {
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px auto;
+  }
+
+  .ant-modal-content {
+    padding: 16px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-clickable-row {
+    cursor: default;
+  }
+}

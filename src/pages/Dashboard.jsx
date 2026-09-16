@@ -83,16 +83,18 @@ const Dashboard = () => {
   // Profit Split Calculator Local State
   const [investorPct, setInvestorPct] = useState("");
   const [companyPct, setCompanyPct] = useState("");
+  const [systemPct, setSystemPct] = useState("");
   const [calcAmount, setCalcAmount] = useState("");
 
   const numericCalcAmount = parseFloat(calcAmount.replace(/,/g, "")) || 0;
   const investorPayout = numericCalcAmount * ((investorPct || 0) / 100);
   const companyFee = numericCalcAmount * ((companyPct || 0) / 100);
+  const systemMaintenanceFee = numericCalcAmount * ((systemPct || 0) / 100);
 
   const handleInvestorPctChange = (val) => {
     const v = Math.min(100, Math.max(0, parseFloat(val) || 0));
     setInvestorPct(v);
-    setCompanyPct(100 - v);
+    setCompanyPct(Math.max(0, 100 - v - Number(systemPct || 0)));
   };
 
   const handleAmountChange = (e) => {
@@ -286,6 +288,30 @@ const Dashboard = () => {
                   className="w-full bg-[#090A0F] border border-slate-800 p-2 text-slate-500 rounded cursor-not-allowed"
                 />
               </div>
+
+              <div className="flex-1">
+                <label className="text-[10px] text-slate-400">
+                  System Maintenance %
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={systemPct}
+                  onChange={(e) => {
+                    const v = Math.min(
+                      100,
+                      Math.max(0, Number(e.target.value) || 0),
+                    );
+                    setSystemPct(v);
+                    setCompanyPct(
+                      Math.max(0, 100 - Number(investorPct || 0) - v),
+                    );
+                  }}
+                  className="w-full bg-[#090A0F] border border-slate-700 p-2 text-white rounded"
+                />
+              </div>
             </div>
 
             <div className="bg-[#090A0F] p-4 rounded-lg space-y-2">
@@ -302,6 +328,14 @@ const Dashboard = () => {
 
                 <span className="font-bold text-slate-300">
                   {formatNaira(companyFee)}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">System Maintenance:</span>
+
+                <span className="font-bold text-cyan-300">
+                  {formatNaira(systemMaintenanceFee)}
                 </span>
               </div>
             </div>

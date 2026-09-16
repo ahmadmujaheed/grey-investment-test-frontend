@@ -531,7 +531,22 @@ const Users = () => {
                 return (
                   <tr
                     key={user._id || user.id}
-                    className="hover:bg-[#090A0F]/40 transition-colors"
+                    onClick={() =>
+                      navigate(
+                        `${currentUser?.role === "superadmin" ? "/superadmin/users" : "/dashboard/users"}/${user._id || user.id}`,
+                      )
+                    }
+                    tabIndex={0}
+                    role="button"
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(
+                          `${currentUser?.role === "superadmin" ? "/superadmin/users" : "/dashboard/users"}/${user._id || user.id}`,
+                        );
+                      }
+                    }}
+                    className="responsive-clickable-row hover:bg-[#090A0F]/40 transition-colors"
                   >
                     <td className="p-4">
                       <div className="flex items-center gap-3">

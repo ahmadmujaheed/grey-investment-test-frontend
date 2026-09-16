@@ -114,6 +114,15 @@ const DashboardCards = ({ cards, loading }) => {
     },
 
     {
+      title: "System Maintenance",
+      value: formatMoney(cards?.totalSystemMaintenanceProfit || 0),
+      icon: Landmark,
+      color: "text-cyan-400",
+      bg: "bg-cyan-500/10",
+      description: "System maintenance share",
+    },
+
+    {
       title: "Total Withdrawn",
       value: formatMoney(cards?.totalWithdrawn || 0),
       icon: Wallet,

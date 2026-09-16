@@ -206,7 +206,16 @@ const Requests = () => {
               return (
                 <tr
                   key={request._id}
-                  className="hover:bg-[#090A0F]/30 transition-colors"
+                  onClick={() => openUserDetailsModal(request)}
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openUserDetailsModal(request);
+                    }
+                  }}
+                  className="responsive-clickable-row hover:bg-[#090A0F]/30 transition-colors"
                 >
                   <td className="p-4">
                     <p className="font-semibold capitalize text-white">

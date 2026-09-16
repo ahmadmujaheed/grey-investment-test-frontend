@@ -34,7 +34,7 @@ export const distributeInvestmentProfits = async (
   distributionData,
 ) => {
   // distributionData expected structure:
-  // { totalProfit: number, companyShare: number, investorShare: number }
+  // { totalProfit: number, companyShare: number, investorShare: number, systemMaintenanceShare: number }
   const response = await apiClient.patch(
     `/investments/${investmentId}/share-profit`,
     distributionData,

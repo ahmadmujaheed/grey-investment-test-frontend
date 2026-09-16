@@ -40,6 +40,7 @@ const AdminInvestmentDetails = () => {
   const [inputProfitAmount, setInputProfitAmount] = useState("");
   const [companyPercent, setCompanyPercent] = useState("");
   const [investorPercent, setInvestorPercent] = useState("");
+  const [systemMaintenancePercent, setSystemMaintenancePercent] = useState("");
   const [distribute, setDistribute] = useState(false);
 
   const [users, setUsers] = useState([]);
@@ -473,6 +474,7 @@ const AdminInvestmentDetails = () => {
         totalProfit: inputProfitAmount,
         companyShare: companyPercent,
         investorShare: investorPercent,
+        systemMaintenanceShare: systemMaintenancePercent,
       });
 
       console.log(res);
@@ -480,7 +482,9 @@ const AdminInvestmentDetails = () => {
       await Promise.all([loadInvestmentDetails(), loadPlatformUsers()]);
     } catch (error) {
       console.error(error);
-      message.error("Failed to distribute profit.");
+      message.error(
+        error.response?.data?.message || "Failed to distribute profit.",
+      );
     } finally {
       setDistribute(false);
     }
@@ -902,11 +906,15 @@ const AdminInvestmentDetails = () => {
                 </label>
 
                 <input
-                  type="number"
-                  min="1"
+                  type="text"
+                  inputMode="numeric"
                   required
-                  value={inputProfitAmount}
-                  onChange={(event) => setInputProfitAmount(event.target.value)}
+                  value={formatCurrencyInput(inputProfitAmount)}
+                  onChange={(event) =>
+                    setInputProfitAmount(
+                      sanitizeCurrencyInput(event.target.value),
+                    )
+                  }
                   disabled={
                     investmentDetails?.investment?.status === "completed"
                   }
@@ -915,7 +923,7 @@ const AdminInvestmentDetails = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-bold text-[#9CA3AF] block">
                     Company %
@@ -953,14 +961,41 @@ const AdminInvestmentDetails = () => {
                     className="w-full px-3 py-2 bg-[#090A0F] border border-slate-800 text-white focus:outline-none focus:border-[#3B82F6]"
                   />
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-[#9CA3AF] block">
+                    System Maintenance %
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    disabled={
+                      investmentDetails?.investment?.status === "completed"
+                    }
+                    value={systemMaintenancePercent}
+                    onChange={(event) =>
+                      setSystemMaintenancePercent(event.target.value)
+                    }
+                    className="w-full px-3 py-2 bg-[#090A0F] border border-slate-800 text-white focus:outline-none focus:border-[#3B82F6]"
+                  />
+                </div>
               </div>
+
+              <p className="text-[11px] text-[#9CA3AF]">
+                Company + Investor + System Maintenance must equal 100%.
+              </p>
 
               <button
                 type="submit"
                 disabled={
                   distribute ||
                   investmentDetails?.investment?.status === "completed" ||
-                  Number(companyPercent) + Number(investorPercent) !== 100
+                  Number(companyPercent) +
+                    Number(investorPercent) +
+                    Number(systemMaintenancePercent) !== 100
                 }
                 className="w-full py-2.5 bg-[#3B82F6] hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-sm"
               >
