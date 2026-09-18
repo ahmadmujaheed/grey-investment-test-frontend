@@ -387,6 +387,14 @@ const handleSubmitWithdrawal = async () => {
                     <p className="text-[11px] text-slate-400 mt-1">
                       {event.description}
                     </p>
+                    {event.sourceInvestment && (
+                      <p className="text-[11px] text-sky-300 mt-1">
+                        Source: {event.sourceInvestment.title}
+                        {event.sourceInvestment.reference
+                          ? ` (${event.sourceInvestment.reference})`
+                          : ""}
+                      </p>
+                    )}
                     {event.destinationInvestment && (
                       <p className="text-[11px] text-amber-300 mt-1">
                         Destination: {event.destinationInvestment.title}

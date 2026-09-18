@@ -16,7 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Tag, message, Skeleton } from "antd";
-import { fetchUserById } from "../api/userApi";
+import { fetchUserById, resetUserPassword } from "../api/userApi";
 import { fetchAllWithdrawalsApi } from "../api/withdrawalApi";
 
 const money = (value = 0) =>
@@ -95,6 +95,8 @@ const UserDetails = () => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const load = async () => {
     try {
@@ -130,6 +132,27 @@ const UserDetails = () => {
   useEffect(() => {
     load();
   }, [id]);
+
+
+  const handleResetPassword = async () => {
+    if (resetPassword.length < 8) {
+      message.error("Temporary password must be at least 8 characters.");
+      return;
+    }
+    try {
+      setResettingPassword(true);
+      const response = await resetUserPassword({
+        userId: user?._id || user?.id,
+        temporaryPassword: resetPassword,
+      });
+      message.success(response?.message || "Password reset successfully.");
+      setResetPassword("");
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to reset password.");
+    } finally {
+      setResettingPassword(false);
+    }
+  };
 
   const allocations = user?.allocations || [];
 
@@ -274,12 +297,17 @@ const UserDetails = () => {
           </div>
         </div>
 
-        <button
-          onClick={downloadStatement}
-          className="no-print inline-flex items-center justify-center gap-2 bg-[#34D399] px-4 py-2.5 text-xs font-bold text-[#090A0F] hover:bg-[#06D6A0]"
-        >
-          <Download size={16} /> Download Statement / PDF
-        </button>
+        <div className="no-print flex flex-wrap items-center gap-2">
+          <button onClick={downloadStatement} className="inline-flex items-center justify-center gap-2 bg-[#34D399] px-4 py-2.5 text-xs font-bold text-[#090A0F] hover:bg-[#06D6A0]">
+            <Download size={16} /> Download Statement / PDF
+          </button>
+          <div className="flex flex-wrap items-center gap-2 rounded border border-slate-700 bg-[#090A0F] p-2">
+            <input type="password" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} placeholder="Temporary password" className="w-40 bg-transparent px-2 py-1 text-xs text-white outline-none" />
+            <button onClick={handleResetPassword} disabled={resettingPassword || resetPassword.length < 8} className="bg-amber-500 px-3 py-2 text-xs font-bold text-black disabled:opacity-50">
+              {resettingPassword ? "Resetting..." : "Reset Password"}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="print-profile-card hidden print:flex">

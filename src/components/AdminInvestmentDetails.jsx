@@ -69,6 +69,7 @@ const AdminInvestmentDetails = () => {
   const [packageSaving, setPackageSaving] = useState(false);
   const [editingAllocation, setEditingAllocation] = useState(null);
   const [editedPrincipal, setEditedPrincipal] = useState("");
+  const [editedSourceAmounts, setEditedSourceAmounts] = useState([]);
   const [principalSaving, setPrincipalSaving] = useState(false);
   const [resetPassword, setResetPassword] = useState("");
   const [resetPopoverOpen, setResetPopoverOpen] = useState(false);
@@ -592,6 +593,12 @@ const AdminInvestmentDetails = () => {
 
   const openPrincipalEditor = (investor) => {
     setEditingAllocation(investor);
+    const rows = investor.reinvestmentSources?.length
+      ? investor.reinvestmentSources
+      : investor.sourceAllocation
+        ? [{ sourceAllocation: investor.sourceAllocation, originalAmount: investor.principal, amountStillReinvested: investor.principal, sourceInvestment: investor.sourceInvestment }]
+        : [];
+    setEditedSourceAmounts(rows.map((row) => ({ ...row, sourceAllocation: row.sourceAllocation?._id || row.sourceAllocation, amount: Number(row.amountStillReinvested ?? row.originalAmount ?? 0) })));
     setEditedPrincipal(String(investor.principal || ""));
   };
 
@@ -605,7 +612,7 @@ const AdminInvestmentDetails = () => {
 
     try {
       setPrincipalSaving(true);
-      await updateInvestorAmount(id, editingAllocation.allocationId, amount);
+      await updateInvestorAmount(id, editingAllocation.allocationId, amount, editedSourceAmounts.length ? editedSourceAmounts.map((row) => ({ sourceAllocation: row.sourceAllocation, amount: Number(row.amount) })) : undefined);
       message.success("Investor amount updated successfully.");
       setEditingAllocation(null);
       setEditedPrincipal("");
@@ -1523,6 +1530,7 @@ const AdminInvestmentDetails = () => {
         onCancel={() => {
           setEditingAllocation(null);
           setEditedPrincipal("");
+          setEditedSourceAmounts([]);
         }}
         onOk={savePrincipal}
         confirmLoading={principalSaving}
@@ -1534,13 +1542,26 @@ const AdminInvestmentDetails = () => {
               ? "This allocation came from another investment’s withdrawable balance. Any decrease returns there; any increase is deducted from the same source."
               : "This allocation uses fresh capital. Reducing it removes the difference; increasing it adds fresh capital."}
           </p>
-          <input
-            type="number"
-            min="1"
-            value={editedPrincipal}
-            onChange={(event) => setEditedPrincipal(event.target.value)}
-            className="w-full border border-slate-300 px-3 py-2"
-          />
+          {editedSourceAmounts.length > 0 && (
+            <div className="space-y-3 rounded border border-slate-200 p-3">
+              <p className="text-xs font-bold uppercase">Source investments</p>
+              {editedSourceAmounts.map((row, index) => (
+                <div key={String(row.sourceAllocation)} className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span>{row.sourceInvestment?.title || row.sourceAllocation?.investment?.title || `Source investment ${index + 1}`}</span>
+                    <span>Original: {formatCurrency(row.originalAmount)}</span>
+                  </div>
+                  <input type="number" min="0" value={row.amount} onChange={(event) => {
+                    const next = editedSourceAmounts.map((item, i) => i === index ? { ...item, amount: event.target.value } : item);
+                    setEditedSourceAmounts(next);
+                    setEditedPrincipal(String(next.reduce((sum, item) => sum + Number(item.amount || 0), 0)));
+                  }} className="w-full border border-slate-300 px-3 py-2" />
+                </div>
+              ))}
+              <div className="text-right text-xs font-bold">Source total: {formatCurrency(editedSourceAmounts.reduce((sum, row) => sum + Number(row.amount || 0), 0))}</div>
+            </div>
+          )}
+          <input type="number" min="1" value={editedPrincipal} readOnly={editedSourceAmounts.length > 0} onChange={(event) => setEditedPrincipal(event.target.value)} className="w-full border border-slate-300 px-3 py-2" />
         </div>
       </Modal>
     </motion.div>
