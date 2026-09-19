@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Wallet,
@@ -16,12 +16,12 @@ import {
 import { Skeleton, Popover, Button, message } from "antd";
 import { fetchInvestmentById } from "../../api/investmentApi";
 import { requestWithdrawalApi } from "../../api/withdrawalApi"
+import { fetchUserById } from "../../api/userApi";
 import { NIGERIAN_BANKS } from "../../utils/bank";
 import {
   formatCurrencyInput,
   sanitizeCurrencyInput,
 } from "../../utils/currencyInput";
-
 
 
 const formatCurrency = (amount = 0) =>
@@ -41,6 +41,8 @@ const InvestmentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+
   const [investmentDetails, setInvestmentDetails] = useState();
 
   // Core structured database object wrapper matching your specific response structure
@@ -57,6 +59,8 @@ const InvestmentDetails = () => {
     accountNumber: "",
     source: "profit",
   });
+
+
 
   const loadData = async () => {
     try {
@@ -78,18 +82,18 @@ const InvestmentDetails = () => {
         const history =
           !hasLimitHistory && currentLimit > 0
             ? [
-                ...returnedHistory,
-                {
-                  id: `current-limit-${response.myInvestment.allocationId}`,
-                  type: "withdrawable_limit",
-                  amount: currentLimit,
-                  status: "completed",
-                  description: "Current withdrawable limit set by the admin.",
-                  createdAt:
-                    response.myInvestment.allocatedAt || new Date().toISOString(),
-                  isCurrentSnapshot: true,
-                },
-              ]
+              ...returnedHistory,
+              {
+                id: `current-limit-${response.myInvestment.allocationId}`,
+                type: "withdrawable_limit",
+                amount: currentLimit,
+                status: "completed",
+                description: "Current withdrawable limit set by the admin.",
+                createdAt:
+                  response.myInvestment.allocatedAt || new Date().toISOString(),
+                isCurrentSnapshot: true,
+              },
+            ]
             : returnedHistory;
 
         setDetails({
@@ -104,7 +108,7 @@ const InvestmentDetails = () => {
       console.error("Error loading investment:", err);
       setError(
         err.response?.data?.message ||
-          "Failed to resolve contract ledger metadata.",
+        "Failed to resolve contract ledger metadata.",
       );
     } finally {
       setLoading(false);
@@ -148,69 +152,73 @@ const InvestmentDetails = () => {
   //   }
   // };
 
-const handleSubmitWithdrawal = async () => {
-  // 1. Guard clause: Ensure the ID exists before attempting the API call
-  if (!investmentDetails) {
-    return message.error("Allocation ID not found.");
-  }
+  const handleSubmitWithdrawal = async () => {
+    // 1. Guard clause: Ensure the ID exists before attempting the API call
+    if (!investmentDetails) {
+      return message.error("Allocation ID not found.");
+    }
 
-  const requestedAmount = Number(formData.amount);
-  const currentAvailableBalance = Number(
-    details.myInvestment?.availableBalance || 0,
-  );
-
-  if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
-    return message.error("Enter a valid withdrawal amount.");
-  }
-
-  if (currentAvailableBalance <= 0) {
-    return message.error(
-      "You do not have an available withdrawal balance for this investment.",
+    const requestedAmount = Number(formData.amount);
+    const currentAvailableBalance = Number(
+      details.myInvestment?.availableBalance || 0,
     );
-  }
 
-  if (requestedAmount > currentAvailableBalance) {
-    return message.error(
-      `You can request a maximum of ${formatCurrency(currentAvailableBalance)}.`,
-    );
-  }
+    if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+      return message.error("Enter a valid withdrawal amount.");
+    }
 
-  setIsSubmitting(true);
-  try {
-    // 2. Destructure properties directly out of formData state object
-    const { amount, bankName, accountNumber, accountName } = formData;
+    if (currentAvailableBalance <= 0) {
+      return message.error(
+        "You do not have an available withdrawal balance for this investment.",
+      );
+    }
 
-    // 3. Execute the API request with form state values
-    await requestWithdrawalApi(investmentDetails, {
-      amount,
-      bankName,
-      accountNumber,
-      accountName,
-    });
+    if (requestedAmount > currentAvailableBalance) {
+      return message.error(
+        `You can request a maximum of ${formatCurrency(currentAvailableBalance)}.`,
+      );
+    }
 
-    // 4. Handle successful submission UI state updates
-    message.success("Withdrawal request submitted successfully.");
-    setIsWithdrawOpen(false); // Closes the modal matching your state name
-    loadData();              // Reloads your backend data matching your loader name
-    
-  } catch (error) {
-    // 5. Handle server-side validation or network errors cleanly
-    console.error("Withdrawal error:", error);
-    message.error(
-      error?.response?.data?.message || "Failed to submit withdrawal request."
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    setIsSubmitting(true);
+    try {
+      // 2. Destructure properties directly out of formData state object
+      const { amount, bankName, accountNumber, accountName } = formData;
+
+      // 3. Execute the API request with form state values
+      await requestWithdrawalApi(investmentDetails, {
+        amount,
+        bankName,
+        accountNumber,
+        accountName,
+      });
+
+      // 4. Handle successful submission UI state updates
+      message.success("Withdrawal request submitted successfully.");
+      setIsWithdrawOpen(false); // Closes the modal matching your state name
+      loadData();              // Reloads your backend data matching your loader name
+
+    } catch (error) {
+      // 5. Handle server-side validation or network errors cleanly
+      console.error("Withdrawal error:", error);
+      message.error(
+        error?.response?.data?.message || "Failed to submit withdrawal request."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleConfirm = async () => {
     setPopoverOpen(false);
     await handleSubmitWithdrawal();
   };
 
+
+
+
   // Maps properties seamlessly into dynamic card blocks (now containing 6 cards)
- const availableBalance = details.myInvestment?.availableBalance || 0;
+  const availableBalance = details.myInvestment?.availableBalance || 0;
+
 
   const metrics = [
     {
@@ -237,8 +245,8 @@ const handleSubmitWithdrawal = async () => {
       icon: Wallet,
       color: availableBalance === 0 ? "text-rose-200" : "text-emerald-200",
       // Dynamic background and border matching your dark theme palette
-      customBg: availableBalance === 0 
-        ? "bg-rose-950/40 border-rose-500/30" 
+      customBg: availableBalance === 0
+        ? "bg-rose-950/40 border-rose-500/30"
         : "bg-emerald-950/20 border-emerald-500/20",
     },
     {
@@ -311,9 +319,8 @@ const handleSubmitWithdrawal = async () => {
           <div
             key={idx}
             // Uses custom background and border classes if defined, otherwise defaults to original slate styles
-            className={`${
-              item.customBg || "bg-[#1F2937] border-slate-800/80"
-            } border p-5 rounded-xl shadow-md flex flex-col justify-between transition-colors duration-200`}
+            className={`${item.customBg || "bg-[#1F2937] border-slate-800/80"
+              } border p-5 rounded-xl shadow-md flex flex-col justify-between transition-colors duration-200`}
           >
             <div className="flex justify-between items-center mb-3">
               <span className="text-[10px] uppercase font-bold tracking-wider text-[#9CA3AF]">
@@ -409,13 +416,12 @@ const handleSubmitWithdrawal = async () => {
                           ? "Current recorded limit"
                           : new Date(event.createdAt).toLocaleString()}
                       </span>
-                      <span className={`uppercase font-bold ${
-                        event.status === "rejected"
-                          ? "text-rose-400"
-                          : event.status === "pending"
-                            ? "text-amber-400"
-                            : "text-emerald-400"
-                      }`}>
+                      <span className={`uppercase font-bold ${event.status === "rejected"
+                        ? "text-rose-400"
+                        : event.status === "pending"
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                        }`}>
                         {event.status}
                       </span>
                       {event.bankName && <span>{event.bankName}</span>}
@@ -685,3 +691,4 @@ const InfoRow = ({ label, value, isBadge, isMono, badgeStyle }) => (
 );
 
 export default InvestmentDetails;
+
