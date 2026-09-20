@@ -213,6 +213,27 @@ const InvestmentDetails = () => {
     await handleSubmitWithdrawal();
   };
 
+  // const totalAmountCollected = useMemo(()=>{
+  //   if(!details?.history || !Array.isArray(details.history)) return 0;
+  //   return details.history.filter((event)=>event.type === "withdrawal" && event.status !== "rejected").reduce((sum, event)=> sum + Number(event.amount || 0), 0);
+
+  // }, [details.history]);
+
+  const totalAmountCollected = useMemo(() => {
+    if (!Array.isArray(details?.history)) return 0;
+  
+    return details.history
+      .filter(
+        (event) =>
+          event.type === "withdrawal" &&
+          String(event.status || "").toLowerCase() === "approved"
+      )
+      .reduce((sum, event) => {
+        // Prefer amountFromBalance if backend sends it; fall back to amount
+        const value = event.amountFromBalance ?? event.amount ?? 0;
+        return sum + Number(value);
+      }, 0);
+  }, [details.history]);
 
 
 
@@ -238,6 +259,12 @@ const InvestmentDetails = () => {
       val: details.myInvestment?.amountReinvested || 0,
       icon: Coins,
       color: "text-amber-400",
+    },
+    {
+      label: "Amount Collected",
+      val: totalAmountCollected, // Uses calculated total from history or details.myInvestment?.amountCollected
+      icon: Landmark,
+      color: "text-white",
     },
     {
       label: "Liquid Available Balance",
