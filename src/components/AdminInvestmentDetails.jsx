@@ -9,6 +9,7 @@ import {
   RotateCcw,
   UserMinus,
   UserPlus,
+  Eye,
 } from "lucide-react";
 import { HiOutlineArchiveBoxArrowDown } from "react-icons/hi2";
 import { FaRegEdit } from "react-icons/fa";
@@ -821,10 +822,20 @@ const AdminInvestmentDetails = () => {
                       {investor.user?.name?.charAt(0) || "U"}
                     </div> */}
 
-                    <div>
-                      <p className="text-xs font-bold text-white">
-                        {investor.user?.name || "Unknown"}
-                      </p>
+                    <div className="min-w-0">
+                      {investor?.user?._id ? (
+                        <Link
+                          to={`/dashboard/users/${investor.user._id}/investment/${id}`}
+                          className="block text-xs font-bold text-white transition hover:text-emerald-400"
+                          title="Open full investment account statement"
+                        >
+                          {investor.user?.name || "Unknown"}
+                        </Link>
+                      ) : (
+                        <p className="text-xs font-bold text-white">
+                          {investor.user?.name || "Unknown"}
+                        </p>
+                      )}
                       <p className="text-[10px] text-[#9CA3AF]">
                         {investor.user?.email || "No email"}
                       </p>
@@ -848,6 +859,15 @@ const AdminInvestmentDetails = () => {
 
                   <div className="col-span-2 text-right">
                     <div className="flex flex-wrap justify-end gap-2">
+                      {investor?.user?._id && (
+                        <Link
+                          to={`/dashboard/users/${investor.user._id}/investment/${id}`}
+                          className="inline-flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 font-bold uppercase cursor-pointer"
+                          title="View full account statement for this investment"
+                        >
+                          <Eye size={12} /> Statement
+                        </Link>
+                      )}
                       {investmentDetails?.investment?.status ===
                         "completed" && (
                         <button
