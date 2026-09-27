@@ -55,3 +55,12 @@ export const fetchApprovedWithdrawalTotalApi = async (investmentId, userId = nul
   return response.data;
 }
 
+//Fetch total Approved Withdrawals for an investor from all investment
+export const fetchApprovedWithdrawalTotalSummaryApi = async (userId = null, params = {}
+) => {
+  const url = userId ? `/wihtdrawals/total-summary${userId}`:`/withdrawals/total-summary`;
+
+  const response = await apiClient.get(url, {params});
+  return response.data;
+};
+

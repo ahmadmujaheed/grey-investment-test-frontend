@@ -86,8 +86,8 @@ const getWithdrawalUserId = (item) =>
 const getAvailable = (allocation) =>
   num(
     allocation?.availableBalance ??
-      allocation?.availableToWithdraw ??
-      allocation?.remainingWithdrawable,
+    allocation?.availableToWithdraw ??
+    allocation?.remainingWithdrawable,
   );
 
 const eventMeta = (type = "") => {
@@ -178,10 +178,10 @@ const UserInvestmentStatement = () => {
 
     const investor = Array.isArray(investmentResponse?.investors)
       ? investmentResponse.investors.find(
-          (item) =>
-            idOf(item?.user?._id || item?.user?.id || item?.userId) === idOf(userId) &&
-            idOf(item?.investmentId || investmentResponse?.investment?._id) === idOf(investmentId),
-        )
+        (item) =>
+          idOf(item?.user?._id || item?.user?.id || item?.userId) === idOf(userId) &&
+          idOf(item?.investmentId || investmentResponse?.investment?._id) === idOf(investmentId),
+      )
       : null;
 
     return investor || investmentResponse?.myInvestment || null;
@@ -417,15 +417,21 @@ const UserInvestmentStatement = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric icon={PiggyBank} label="Money Invested" value={money(totals.principal)} />
+        <Metric icon={PiggyBank} label="Principal Deposited" value={money(totals.principal)} tone="text-white" />
         <Metric icon={ArrowDownLeft} label="Profit Earned" value={money(totals.profit)} tone="text-emerald-400" />
-        <Metric icon={Wallet} label="Withdrawable Limit" value={money(totals.limit)} tone="text-amber-400" />
-        <Metric icon={Wallet} label="Available to Withdraw" value={money(totals.available)} tone="text-[#34D399]" />
-        <Metric icon={ArrowUpRight} label="Money Withdrawn" value={money(totals.withdrawn)} tone="text-rose-400" />
-        <Metric icon={RefreshCcw} label="Reinvested" value={money(totals.reinvested)} tone="text-violet-400" />
-        <Metric icon={Coins} label="Total Investment Value" value={money(totals.totalValue)} tone="text-blue-400" />
-        <Metric icon={CheckCircle2} label="Investment Status" value={investment.status || allocation.status || "—"} tone="text-[#34D399]" />
-      </div>
+        <Metric icon={Coins} label="Total Pool Value" value={money(totals.totalValue)} tone="text-indigo-400" />
+        <Metric icon={Wallet} label="Available Balance" value={money(totals.available)}
+          tone={totals.available === 0 ? "text-rose-200" : "text-emerald-200"}
+          customBg={
+            totals.available === 0
+              ? "bg-rose-950/40 border-rose-500/30"
+              : "bg-emerald-950/20 border-emerald-500/20"
+          }
+        />
+        <Metric icon={ArrowUpRight} label="Amount Collected" value={money(totals.withdrawn)} tone="text-teal-400" />
+        <Metric icon={Wallet} label="Total Admin Allocation" value={money(totals.limit)} tone="text-fuchsia-500" />
+        <Metric icon={RefreshCcw} label="Amount Reinvested" value={money(totals.reinvested)} tone="text-amber-400" />
+        <Metric icon={CheckCircle2} label="Investment Status" value={investment.status || allocation.status || "—"} tone="text-[#34D399]" />      </div>
 
       <section className="statement-print-section mt-5 border border-slate-800 bg-[#1F2937]">
         <div className="border-b border-slate-800 bg-[#090A0F] px-4 py-3">
@@ -518,8 +524,8 @@ const UserInvestmentStatement = () => {
   );
 };
 
-const Metric = ({ icon: Icon, label, value, tone = "text-white" }) => (
-  <div className="border border-slate-800 bg-[#1F2937] p-4">
+const Metric = ({ icon: Icon, label, value, tone = "text-white", customBg = "" }) => (
+  <div className={`border p-4 ${customBg || "border-slate-800 bg-[#1F2937]"}`}>
     <div className="flex items-center gap-3">
       <div className="bg-[#090A0F] p-2.5 text-[#34D399]"><Icon size={18} /></div>
       <div className="min-w-0">

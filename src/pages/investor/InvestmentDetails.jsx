@@ -246,28 +246,22 @@ const InvestmentDetails = () => {
       label: "Principal Deposited",
       val: details.myInvestment?.principal || 0,
       icon: Wallet,
-      color: "text-emerald-400",
+      color: "text-white",
     },
     {
       label: "Profit Earned",
       val: details.myInvestment?.profitEarned || 0,
       icon: TrendingUp,
-      color: "text-blue-400",
+      color: "text-emerald-400",
     },
     {
-      label: "Amount Reinvested",
-      val: details.myInvestment?.amountReinvested || 0,
-      icon: Coins,
-      color: "text-amber-400",
+      label: "Total Pool Value",
+      val: details.myInvestment?.totalInvestment || 0,
+      icon: Clock,
+      color: "text-indigo-400",
     },
     {
-      label: "Amount Collected",
-      val: totalAmountCollected, // Uses calculated total from history or details.myInvestment?.amountCollected
-      icon: Landmark,
-      color: "text-white",
-    },
-    {
-      label: "Liquid Available Balance",
+      label: "Available Balance",
       val: availableBalance,
       icon: Wallet,
       color: availableBalance === 0 ? "text-rose-200" : "text-emerald-200",
@@ -277,17 +271,23 @@ const InvestmentDetails = () => {
         : "bg-emerald-950/20 border-emerald-500/20",
     },
     {
-      label: "Withdrawable Limit",
-      val: details.myInvestment?.withdrawableLimit || 0,
+      label: "Amount Collected",
+      val: totalAmountCollected, // Uses calculated total from history or details.myInvestment?.amountCollected
       icon: Landmark,
-      color: "text-white",
+      color: "text-teal-400",
     },
     {
-      label: "Total Pool Value",
-      val: details.myInvestment?.totalInvestment || 0,
-      icon: Clock,
-      color: "text-indigo-400",
+      label: "Total Admin Allocation",
+      val: details.myInvestment?.withdrawableLimit || 0,
+      icon: Landmark,
+      color: "text-fuchsia-500",
     },
+    {
+      label: "Amount Reinvested",
+      val: details.myInvestment?.amountReinvested || 0,
+      icon: Coins,
+      color: "text-amber-400",
+    },  
   ];
 
   if (error) {

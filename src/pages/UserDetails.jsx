@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Tag, message, Skeleton } from "antd";
 import { fetchUserById, resetUserPassword } from "../api/userApi";
-import { fetchAllWithdrawalsApi } from "../api/withdrawalApi";
+import { fetchAllWithdrawalsApi, fetchApprovedWithdrawalTotalSummaryApi } from "../api/withdrawalApi";
 
 const money = (value = 0) =>
   new Intl.NumberFormat("en-NG", {
@@ -51,8 +51,8 @@ const dateTime = (value) => {
 const available = (allocation) =>
   number(
     allocation?.availableBalance ??
-      allocation?.remainingWithdrawable ??
-      allocation?.availableToWithdraw,
+    allocation?.remainingWithdrawable ??
+    allocation?.availableToWithdraw,
   );
 
 const investmentIdOf = (allocation) =>
@@ -97,6 +97,8 @@ const UserDetails = () => {
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
   const [resetPassword, setResetPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [collectedSummary, setCollectedSummary] = useState(null)
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   const load = async () => {
     try {
@@ -127,7 +129,21 @@ const UserDetails = () => {
     } finally {
       setWithdrawalsLoading(false);
     }
+
+
+    try {
+      setSummaryLoading(true);
+      const response = await fetchApprovedWithdrawalTotalSummaryApi(id);
+      setCollectedSummary(response?.success ? response : null);
+    } catch (error) {
+      console.warn("Could not load collected summary:", error)
+      setCollectedSummary(null)
+    } finally {
+      setSummaryLoading(false);
+    }
   };
+
+
 
   useEffect(() => {
     load();
@@ -170,10 +186,18 @@ const UserDetails = () => {
     const approvedWithdrawals = withdrawals.filter(
       (w) => String(w.status || "").toLowerCase() === "approved",
     );
-    const collected = approvedWithdrawals.reduce(
-      (sum, w) => sum + number(w.amountFromBalance ?? w.amount),
-      0,
-    );
+    // const collected = approvedWithdrawals.reduce(
+    //   (sum, w) => sum + number(w.amountFromBalance ?? w.amount),
+    //   0,
+    // );
+
+    const collected = collectedSummary?.totalApproved ?? withdrawals
+      .filter((w) => String(w.status || "").toLowerCase() === "approved")
+      .reduce((sum, w) => sum + number(w.amountFromBalance ?? w.amount), 0);
+
+    // const collectedAdvance = collectedSummary?.totalAdvance ?? 0;
+    // const collectedCount   = collectedSummary?.approvedWithdrawalCount ?? 0;
+
 
     return {
       totalInvested,
@@ -184,7 +208,7 @@ const UserDetails = () => {
       reinvested,
       collected,
     };
-  }, [allocations, withdrawals]);
+  }, [allocations, withdrawals, collectedSummary]);
 
   const statementRows = useMemo(() => {
     const raw = [
@@ -323,12 +347,13 @@ const UserDetails = () => {
       </div>
 
       <div className="print-summary-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <SummaryCard icon={PiggyBank} label="Total Invested" value={money(totals.totalInvested)} />
+        <SummaryCard icon={PiggyBank} label="Total Invested" value={money(totals.totalInvested)} accent="text-white" />
         <SummaryCard icon={TrendingUp} label="Total Profit" value={money(totals.totalProfit)} accent="text-emerald-400" />
-        <SummaryCard icon={FileText} label="Portfolio Value" value={money(totals.totalValue)} accent="text-blue-400" />
-        <SummaryCard icon={Wallet} label="Admin Withdrawal Allocation" value={money(totals.allocated)} accent="text-amber-400" />
-        <SummaryCard icon={ArrowUpRight} label="Amount Collected" value={money(totals.collected)} accent="text-rose-400" />
-        <SummaryCard icon={Clock} label="Still Withdrawable" value={money(totals.currentAvailable)} accent="text-[#34D399]" />
+        <SummaryCard icon={FileText} label="Total Portfolio Value" value={money(totals.totalValue)} accent="text-indigo-400" />
+        <SummaryCard icon={Clock} label="Total Available Balance" value={money(totals.currentAvailable)} accent="text-emerald-400" />
+        <SummaryCard icon={ArrowUpRight} label="Total Amount Collected" value={money(totals.collected)} accent="text-teal-400" />
+        <SummaryCard icon={Wallet} label="Total Admin Allocation" value={money(totals.allocated)} accent="text-fuchsia-500" />
+        <SummaryCard icon={RefreshCcw} label="Total Reinvested" value={money(totals.reinvested)} accent="text-amber-400" />
       </div>
 
       <section className="print-section border border-slate-800 bg-[#1F2937] print:border-black print:bg-white">
