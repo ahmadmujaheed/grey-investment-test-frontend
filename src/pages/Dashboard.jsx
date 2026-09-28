@@ -23,11 +23,13 @@ import { message, Skeleton } from "antd";
 import {
   fetchDashboardAnalytics,
   fetchDashboardAnalyticsChart,
+  fetchLiquiditySummary,
 } from "../api/analyticsApi";
 import DashboardCards from "../components/DashboardCards";
 import DashboardChart from "../components/DashboardChart";
 import TransactionHistory from "../components/TransactionHistory";
 import RecentInvestments from "../components/RecentInvestments";
+
 
 // Motion animation presets
 const fadeInUp = {
@@ -120,7 +122,7 @@ const Dashboard = () => {
       } catch (err) {
         message.error(
           err?.message ||
-            "Failed to communicate with analytics engine database nodes.",
+          "Failed to communicate with analytics engine database nodes.",
         );
       } finally {
         setLoading(false);
@@ -129,6 +131,21 @@ const Dashboard = () => {
 
     loadSystemAnalytics();
   }, []);
+
+  //liquidity summary:total available balance from all investors in all investment
+  const refetchLiquidity = async () => {
+    try {
+      const liquidity = await fetchLiquiditySummary();
+      setAnalyticsData((prev) => ({
+        ...prev,
+        cards: { ...(prev?.cards || {}), liquidity },
+      }));
+    } catch (err) {
+      message.error(
+        err?.response?.data?.message || "Failed to refresh liquidity."
+      );
+    }
+  };
 
   // 💀 Skeleton Loader View (Perfect Dark Theme Matching)
   if (loading) {
@@ -344,16 +361,16 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-          <TransactionHistory
-            transactions={analyticsData?.recentTransactions}
-            loading={loading}
-          />
-          
-          <RecentInvestments
-            investments={analyticsData?.recentInvestments}
-            loading={loading}
-          />
+
+        <TransactionHistory
+          transactions={analyticsData?.recentTransactions}
+          loading={loading}
+        />
+
+        <RecentInvestments
+          investments={analyticsData?.recentInvestments}
+          loading={loading}
+        />
       </div>
     </motion.div>
   );

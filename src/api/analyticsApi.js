@@ -16,6 +16,11 @@ export const fetchDashboardAnalyticsChart = async () => {
   return response.data;
 };
 
+export const fetchLiquiditySummary = async () => {
+  const response = await apiClient.get("/analytics/admin/analytics/liquidity");
+  return response.data?.data ?? null;
+};
+
 /**
  * 📈 Fetch isolated, token-specific metrics for individual investor control panels (Investor Only)
  * @returns {Promise<Object>} Tailored metric payload with personal capital entries
