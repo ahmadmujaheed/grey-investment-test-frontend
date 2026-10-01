@@ -87,13 +87,15 @@ const Settings = () => {
     <div className="space-y-6 bg-[#1F1F1F] min-h-screen text-[#9CA3AF]">
       
       {/* Page Title Header */}
-      <div className="border-b border-slate-800 pb-5">
-        <div className="flex items-center gap-2 text-white">
-          <SettingsIcon size={22} className="text-[#34D399]" />
-          <h1 className="text-2xl font-bold tracking-tight">System Settings</h1>
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-800 pb-5">
+        <div>
+          <div className="flex items-center gap-2 text-white">
+            <SettingsIcon size={22} className="text-[#34D399]" />
+            <h1 className="text-2xl font-bold tracking-tight">System Settings</h1>
+          </div>
+          <p className="text-sm text-[#9CA3AF] mt-0.5">Manage administrative profile details, equity yield ratios, and secure system access passwords.</p>
         </div>
-        <p className="text-sm text-[#9CA3AF] mt-0.5">Manage administrative profile details, equity yield ratios, and secure system access passwords.</p>
-      </div>
+       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="border border-amber-500/30 bg-[#1F2937] p-6 rounded-none space-y-4 lg:col-span-2">

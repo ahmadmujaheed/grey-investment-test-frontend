@@ -56,6 +56,7 @@ const AdminInvestmentDetails = () => {
   const [walletBalance, setWalletBalance] = useState(0);
 
   const [newInvestorAmount, setNewInvestorAmount] = useState("");
+  const [freshCapitalAmount, setFreshCapitalAmount] = useState("");
   const [allocate, setAllocate] = useState(false);
 
   const [addWithdrawable, setAddWithdrawable] = useState(null);
@@ -238,6 +239,7 @@ const AdminInvestmentDetails = () => {
     setSourceAllocationAmounts({});
     setWalletBalance(0);
     setNewInvestorAmount("");
+    setFreshCapitalAmount("");
   };
 
   const handleSourceChange = (source) => {
@@ -247,6 +249,7 @@ const AdminInvestmentDetails = () => {
     setSourceAllocationAmounts({});
     setWalletBalance(0);
     setNewInvestorAmount("");
+    setFreshCapitalAmount("");
   };
 
   const getAvailableBalance = (allocation) =>
@@ -282,6 +285,17 @@ const AdminInvestmentDetails = () => {
       return total + getAvailableBalance(allocation);
     }, 0);
   };
+
+  const selectedReinvestmentAmount = sourceAllocationIds.reduce(
+    (total, allocationId) => total + Number(sourceAllocationAmounts[allocationId] || 0),
+    0,
+  );
+  const currentFreshCapitalAmount = selectedSource === "capital"
+    ? Number(newInvestorAmount || 0)
+    : selectedSource === "mixed"
+      ? Number(freshCapitalAmount || 0)
+      : 0;
+  const totalAllocationAmount = selectedReinvestmentAmount + currentFreshCapitalAmount;
 
   const handleSourceAllocationSelect = (allocationIds) => {
     const ids = Array.isArray(allocationIds) ? allocationIds.map(String) : [];
@@ -371,14 +385,22 @@ const AdminInvestmentDetails = () => {
   const handleAddInvestor = async (event) => {
     event.preventDefault();
 
-    const amount =
-      selectedSource === "profit"
-        ? sourceAllocationIds.reduce(
-            (sum, allocationId) =>
-              sum + Number(sourceAllocationAmounts[allocationId] || 0),
-            0,
-          )
-        : Number(newInvestorAmount);
+    const sourceContributions = sourceAllocationIds
+      .map((allocationId) => ({
+        allocationId,
+        amount: Number(sourceAllocationAmounts[allocationId] || 0),
+      }))
+      .filter((item) => item.amount > 0);
+    const sourceAmount = sourceContributions.reduce(
+      (total, item) => total + item.amount,
+      0,
+    );
+    const freshAmount = selectedSource === "capital"
+      ? Number(newInvestorAmount || 0)
+      : selectedSource === "mixed"
+        ? Number(freshCapitalAmount || 0)
+        : 0;
+    const amount = sourceAmount + freshAmount;
     const investmentId = id;
 
     if (!investmentId) {
@@ -396,39 +418,18 @@ const AdminInvestmentDetails = () => {
       return;
     }
 
-    if (selectedSource === "profit" && sourceAllocationIds.length === 0) {
-      message.warning("Please select the source investment.");
+    if (selectedSource === "profit" && sourceContributions.length === 0) {
+      message.warning("Enter an amount from at least one source investment.");
       return;
-    }
-
-    if (selectedSource === "profit") {
-      const originalTotal = getTotalOriginalSelectedBalance();
-      const selectedTotal = sourceAllocationIds.reduce(
-        (total, allocationId) => {
-          return total + Number(sourceAllocationAmounts[allocationId] || 0);
-        },
-        0,
-      );
-
-      if (amount > originalTotal || amount !== selectedTotal) {
-        message.warning("Please check the reinvestment amounts.");
-        return;
-      }
     }
 
     const payload = {
       userId: targetUserId,
       amount,
-      isReinvestment: selectedSource === "profit",
-      sourceAllocationIds:
-        selectedSource === "profit" ? sourceAllocationIds : undefined,
-      sourceAllocationAmounts:
-        selectedSource === "profit"
-          ? sourceAllocationIds.map((allocationId) => ({
-              allocationId,
-              amount: Number(sourceAllocationAmounts[allocationId] || 0),
-            }))
-          : undefined,
+      freshAmount,
+      isReinvestment: sourceContributions.length > 0,
+      sourceAllocationIds: sourceContributions.map((item) => item.allocationId),
+      sourceAllocationAmounts: sourceContributions,
     };
 
     try {
@@ -437,9 +438,11 @@ const AdminInvestmentDetails = () => {
       await addInvestorToPool(investmentId, payload);
 
       message.success(
-        selectedSource === "profit"
-          ? "Reinvestment completed successfully."
-          : "Investor added successfully.",
+        sourceContributions.length > 0 && freshAmount > 0
+          ? "Mixed investment completed successfully."
+          : sourceContributions.length > 0
+            ? "Reinvestment completed successfully."
+            : "Investor added successfully.",
       );
 
       setTargetUserId(undefined);
@@ -449,6 +452,7 @@ const AdminInvestmentDetails = () => {
       setSourceAllocationAmounts({});
       setWalletBalance(0);
       setNewInvestorAmount("");
+      setFreshCapitalAmount("");
 
       await Promise.all([loadInvestmentDetails(), loadPlatformUsers()]);
     } catch (error) {
@@ -461,7 +465,6 @@ const AdminInvestmentDetails = () => {
       setAllocate(false);
     }
   };
-
 
   const handleDistributeProfit = async (event) => {
     event.preventDefault();
@@ -765,7 +768,7 @@ const AdminInvestmentDetails = () => {
                 {investmentDetails?.investment?.title}
               </h2>
 
-              <div className="grid grid-cols-3 gap-4 border-t border-slate-800 pt-4 text-xs font-semibold">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-800 pt-4 text-xs font-semibold">
                 <div>
                   <span className="text-[#9CA3AF] block">Target Cap</span>
                   <span className="text-xl font-bold text-blue-400">
@@ -788,6 +791,21 @@ const AdminInvestmentDetails = () => {
                   <span className="text-[#9CA3AF] block">Members</span>
                   <span className="text-xl font-bold text-white">
                     {investmentDetails?.investors?.length || 0}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[#9CA3AF] block">System Maintenance Fee</span>
+                  <span className="text-xl font-bold text-amber-300">
+                    {formatCurrency(
+                      investmentDetails?.investment?.systemMaintenanceAccumulated ??
+                        investmentDetails?.investment?.systemMaintenanceProfit,
+                    )}
+                  </span>
+                  <span className="mt-1 block text-[10px] font-medium text-slate-500">
+                    {Number(investmentDetails?.investment?.systemMaintenancePercentage || 0) > 0
+                      ? `${Number(investmentDetails.investment.systemMaintenancePercentage)}% of profit`
+                      : "Accumulated system share"}
                   </span>
                 </div>
               </div>
@@ -1016,12 +1034,11 @@ const AdminInvestmentDetails = () => {
           <div className="border border-slate-800 bg-[#1F2937] p-5 space-y-4 rounded-none">
             <div className="flex items-center gap-2 text-white">
               <UserPlus size={18} className="text-[#34D399]" />
-              <h3 className="font-bold text-base">Add User to Pool</h3>
+              <h3 className="font-bold text-base">Trade + Reinvestment</h3>
             </div>
 
             <p className="text-xs text-[#9CA3AF] leading-relaxed">
-              Allocate fresh capital or reinvest a user&apos;s withdrawable
-              balance into this investment.
+              Allocate fresh capital, reinvest from available profit, or combine both in this investment.
             </p>
 
             {/* <form onSubmit={handleAddInvestor} className="space-y-4 text-xs">
@@ -1209,7 +1226,6 @@ const AdminInvestmentDetails = () => {
                 <label className="font-bold text-[#9CA3AF] block">
                   Select Platform Member
                 </label>
-
                 <Select
                   showSearch
                   loading={usersLoading}
@@ -1217,81 +1233,65 @@ const AdminInvestmentDetails = () => {
                   optionFilterProp="label"
                   value={targetUserId}
                   onChange={handleUserSelect}
+                  disabled={["completed", "archived", "running", "paused"].includes(investmentDetails?.investment?.status)}
                   className="w-full h-9 rounded-none"
                   options={users.map((user) => ({
                     value: user._id || user.id,
-                    label: `${user.name} (${user.email})`,
+                    label: user.name + " (" + user.email + ")",
                   }))}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-1 bg-[#090A0F] p-0.5">
+              <div className="grid grid-cols-3 gap-1 bg-[#090A0F] p-0.5">
                 <button
                   type="button"
                   onClick={() => handleSourceChange("capital")}
-                  className={`py-1.5 text-[10px] font-bold ${
-                    selectedSource === "capital"
-                      ? "bg-slate-800 text-white"
-                      : "text-[#9CA3AF]"
-                  }`}
+                  className={selectedSource === "capital" ? "py-1.5 text-[10px] font-bold bg-slate-800 text-white" : "py-1.5 text-[10px] font-bold text-[#9CA3AF]"}
                 >
                   FRESH CAPITAL
                 </button>
-
                 <button
                   type="button"
                   onClick={() => handleSourceChange("profit")}
-                  className={`py-1.5 text-[10px] font-bold ${
-                    selectedSource === "profit"
-                      ? "bg-[#34D399] text-[#090A0F]"
-                      : "text-[#9CA3AF]"
-                  }`}
+                  className={selectedSource === "profit" ? "py-1.5 text-[10px] font-bold bg-[#34D399] text-[#090A0F]" : "py-1.5 text-[10px] font-bold text-[#9CA3AF]"}
                 >
-                  AVAILABLE BALANCE
+                  PROFIT ONLY
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSourceChange("mixed")}
+                  className={selectedSource === "mixed" ? "py-1.5 text-[10px] font-bold bg-indigo-400 text-[#090A0F]" : "py-1.5 text-[10px] font-bold text-[#9CA3AF]"}
+                >
+                  PROFIT + FRESH
                 </button>
               </div>
 
-              {selectedSource === "profit" && (
+              {selectedSource !== "capital" && (
                 <>
                   <div className="space-y-1.5">
                     <label className="font-bold text-[#9CA3AF] block">
                       Select Source Investment
                     </label>
-
                     <Select
-                      placeholder={
-                        selectedUser
-                          ? "Choose investment to reinvest from"
-                          : "Select a user first"
-                      }
+                      placeholder={selectedUser ? "Choose investment to reinvest from" : "Select a user first"}
                       disabled={!selectedUser}
                       mode="multiple"
                       value={sourceAllocationIds}
                       onChange={handleSourceAllocationSelect}
                       className="w-full h-9 rounded-none"
                       options={(selectedUser?.allocations || [])
-                        .filter(
-                          (allocation) =>
-                            !allocation.isClosed &&
-                            getAvailableBalance(allocation) > 0,
-                        )
+                        .filter((allocation) => !allocation.isClosed && getAvailableBalance(allocation) > 0)
                         .map((allocation) => ({
-                          value:
-                            allocation.allocationId ||
-                            allocation._id ||
-                            allocation.id,
-                          label: `${
-                            allocation.investment?.title || "Source investment"
-                          } — ${formatCurrency(getAvailableBalance(allocation))}`,
+                          value: allocation.allocationId || allocation._id || allocation.id,
+                          label: (allocation.investment?.title || "Source investment") + " — " + formatCurrency(getAvailableBalance(allocation)),
                         }))}
                     />
                   </div>
 
                   <div className="flex items-center justify-between border border-[#34D399]/20 bg-[#090A0F] px-3 py-2">
                     <span className="text-[10px] uppercase text-[#9CA3AF]">
-                      Available balance (after reductions)
+                      Balance left in selected investments
                     </span>
-
                     <span className="font-mono text-sm font-bold text-[#34D399]">
                       {formatCurrency(walletBalance)}
                     </span>
@@ -1299,87 +1299,73 @@ const AdminInvestmentDetails = () => {
                 </>
               )}
 
-              <div className="space-y-1.5">
-                <label className="font-bold text-[#9CA3AF] block">
-                  {selectedSource === "profit"
-                    ? "Amount to Reinvest (₦)"
-                    : "Fresh Investment Amount (₦)"}
-                </label>
-
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  required
-                  value={
-                    selectedSource === "profit"
-                      ? formatAmountInput(newInvestorAmount)
-                      : formatAmountInput(newInvestorAmount)
-                  }
-                  readOnly={selectedSource === "profit"}
-                  onChange={
-                    selectedSource === "profit" ? undefined : handleAmountChange
-                  }
-                  disabled={
-                    selectedSource === "profit" &&
-                    (sourceAllocationIds.length === 0 || walletBalance <= 0)
-                  }
-                  placeholder={
-                    selectedSource === "profit"
-                      ? `Maximum: ${formatCurrency(walletBalance)}`
-                      : "e.g. 500000"
-                  }
-                  className="w-full px-3 py-2 bg-[#090A0F] border border-slate-800 font-semibold text-white focus:outline-none focus:border-[#34D399] disabled:opacity-50"
-                />
-                <div className="mt-2 space-y-2">
-                  {(selectedUser?.allocations || [])
-                    .filter((allocation) =>
-                      sourceAllocationIds.includes(
-                        String(
-                          allocation.allocationId ||
-                            allocation._id ||
-                            allocation.id,
-                        ),
-                      ),
-                    )
-                    .map((allocation) => {
-                      const allocationId = String(
-                        allocation.allocationId ||
-                          allocation._id ||
-                          allocation.id,
-                      );
-                      const maximum = getAvailableBalance(allocation);
-                      return (
-                        <div
-                          key={allocationId}
-                          className="flex items-center gap-2 border border-slate-800 bg-[#090A0F] p-2"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[11px] font-bold text-white">
-                              {allocation.investment?.title ||
-                                "Source investment"}
-                            </p>
-                            <p className="text-[10px] text-[#9CA3AF]">
-                              Max: {formatCurrency(maximum)}
-                            </p>
-                          </div>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            value={formatAmountInput(
-                              sourceAllocationAmounts[allocationId] ?? "",
-                            )}
-                            onChange={(event) =>
-                              handleSourceAllocationAmountChange(
-                                allocation,
-                                event.target.value,
-                              )
-                            }
-                            className="w-36 rounded-none border border-slate-700 bg-[#11131A] px-2 py-1 text-right text-xs font-bold text-white"
-                          />
-                        </div>
-                      );
-                    })}
+              {(selectedSource === "capital" || selectedSource === "mixed") && (
+                <div className="space-y-1.5">
+                  <label className="font-bold text-[#9CA3AF] block">
+                    {selectedSource === "mixed" ? "Fresh Capital to Add (₦)" : "Fresh Investment Amount (₦)"}
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    required={selectedSource === "capital"}
+                    value={formatAmountInput(selectedSource === "mixed" ? freshCapitalAmount : newInvestorAmount)}
+                    onChange={(event) => {
+                      if (selectedSource === "mixed") {
+                        setFreshCapitalAmount(parseAmountInput(event.target.value));
+                      } else {
+                        handleAmountChange(event);
+                      }
+                    }}
+                    placeholder="e.g. 500000"
+                    className="w-full px-3 py-2 bg-[#090A0F] border border-slate-800 font-semibold text-white focus:outline-none focus:border-[#34D399]"
+                  />
                 </div>
+              )}
+
+              {selectedSource !== "capital" && (
+                <div className="space-y-1.5">
+                  <label className="font-bold text-[#9CA3AF] block">
+                    Amount from Available Balance (₦)
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={formatAmountInput(newInvestorAmount)}
+                    placeholder="Enter amounts for selected source investments"
+                    className="w-full px-3 py-2 bg-[#090A0F] border border-slate-800 font-semibold text-white"
+                  />
+                  <div className="space-y-2">
+                    {(selectedUser?.allocations || [])
+                      .filter((allocation) =>
+                        sourceAllocationIds.includes(String(allocation.allocationId || allocation._id || allocation.id))
+                      )
+                      .map((allocation) => {
+                        const allocationId = String(allocation.allocationId || allocation._id || allocation.id);
+                        const maximum = getAvailableBalance(allocation);
+                        return (
+                          <div key={allocationId} className="flex items-center gap-2 border border-slate-800 bg-[#090A0F] p-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[11px] font-bold text-white">{allocation.investment?.title || "Source investment"}</p>
+                              <p className="text-[10px] text-[#9CA3AF]">Max: {formatCurrency(maximum)}</p>
+                            </div>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={formatAmountInput(sourceAllocationAmounts[allocationId] ?? "")}
+                              onChange={(event) => handleSourceAllocationAmountChange(allocation, event.target.value)}
+                              aria-label={"Amount from " + (allocation.investment?.title || "source investment")}
+                              className="w-36 rounded-none border border-slate-700 bg-[#11131A] px-2 py-1 text-right text-xs font-bold text-white"
+                            />
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between border border-slate-700 bg-[#090A0F] px-3 py-2">
+                <span className="text-[10px] uppercase text-[#9CA3AF]">Total investment amount</span>
+                <span className="font-mono text-sm font-bold text-white">{formatCurrency(totalAllocationAmount)}</span>
               </div>
 
               <button
@@ -1387,8 +1373,8 @@ const AdminInvestmentDetails = () => {
                 disabled={
                   allocate ||
                   !targetUserId ||
-                  (selectedSource === "profit" &&
-                    sourceAllocationIds.length === 0)
+                  totalAllocationAmount <= 0 ||
+                  ["completed", "archived", "running", "paused"].includes(investmentDetails?.investment?.status)
                 }
                 className="w-full py-2.5 bg-[#34D399] hover:bg-[#06D6A0] disabled:bg-slate-800 disabled:text-slate-500 text-[#090A0F] font-bold text-sm"
               >
@@ -1396,7 +1382,9 @@ const AdminInvestmentDetails = () => {
                   ? "Processing..."
                   : selectedSource === "profit"
                     ? "Confirm Reinvestment"
-                    : "Confirm Investment"}
+                    : selectedSource === "mixed"
+                      ? "Confirm Mixed Investment"
+                      : "Confirm Investment"}
               </button>
             </form>
           </div>

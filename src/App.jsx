@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 
 // Layouts
@@ -15,6 +15,7 @@ import Users from "./pages/Users";
 import UserDetails from "./pages/UserDetails";
 import UserInvestmentStatement from "./pages/UserInvestmentStatement";
 import Settings from "./pages/Settings";
+import MaintenanceFeeHistory from "./pages/MaintenanceFeeHistory";
 import Request from "./pages/Request";
 
 // Shared Pages
@@ -48,8 +49,20 @@ const App = () => {
             <Route path="investment/:id" element={<AdminInvestmentDetails />} />
             <Route path="users" element={<Users />} />
             <Route path="users/:id" element={<UserDetails />} />
-            <Route path="users/:userId/investment/:investmentId" element={<UserInvestmentStatement />} />
+            <Route
+              path="users/:userId/investment/:investmentId"
+              element={<UserInvestmentStatement />}
+            />
+
             <Route path="settings" element={<Settings />} />
+            <Route
+              path="maintenance-fees"
+              element={<MaintenanceFeeHistory />}
+            />
+            <Route
+              path="settings/maintenance-fees"
+              element={<Navigate to="/dashboard/maintenance-fees" replace />}
+            />
             <Route path="profile" element={<Profile />} />
             <Route path="requests" element={<Request />} />
           </Route>
@@ -60,14 +73,20 @@ const App = () => {
             <Route index element={<SuperAdminDashboard />} />
             <Route path="users" element={<Users />} />
             <Route path="users/:id" element={<UserDetails />} />
-            <Route path="users/:userId/investment/:investmentId" element={<UserInvestmentStatement />} />
+            <Route
+              path="users/:userId/investment/:investmentId"
+              element={<UserInvestmentStatement />}
+            />
           </Route>
         </Route>
 
         {/* 📈 INVESTOR (USER) ONLY BRANCH */}
         <Route element={<ProtectedRoute allowedRole="user" />}>
           <Route path="/user-dashboard" element={<UserLayout />}>
-            <Route path="user-investments/investment/:id" element={<InvestmentDetails />} />
+            <Route
+              path="user-investments/investment/:id"
+              element={<InvestmentDetails />}
+            />
             <Route path="" element={<UserDashboard />} />
             <Route path="user-investments" element={<UserInvestment />} />
             <Route path="user-settings" element={<UserSettings />} />

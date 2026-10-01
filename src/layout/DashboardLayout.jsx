@@ -4,6 +4,7 @@ import {
   TrendingUp,
   User,
   Settings,
+  History,
   Menu,
   X,
   LogOut,
@@ -113,6 +114,12 @@ const DashboardLayout = () => {
       label: "Settings",
       icon: Settings,
       path: "/dashboard/settings",
+    },
+    {
+      id: "maintenance-fees",
+      label: "Maintenance Fee",
+      icon: History,
+      path: "/dashboard/maintenance-fees",
     },
   ];
 

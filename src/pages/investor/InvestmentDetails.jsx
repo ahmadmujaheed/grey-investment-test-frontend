@@ -219,6 +219,13 @@ const InvestmentDetails = () => {
 
   // }, [details.history]);
 
+  const totalMaintenanceFees = useMemo(() => {
+    if (!Array.isArray(details?.history)) return 0;
+    return details.history
+      .filter((event) => event.type === "maintenance_fee")
+      .reduce((sum, event) => sum + Number(event.amount || 0), 0);
+  }, [details.history]);
+
   const totalAmountCollected = useMemo(() => {
     if (!Array.isArray(details?.history)) return 0;
   
@@ -269,6 +276,12 @@ const InvestmentDetails = () => {
       customBg: availableBalance === 0
         ? "bg-rose-950/40 border-rose-500/30"
         : "bg-emerald-950/20 border-emerald-500/20",
+    },
+    {
+      label: "Maintenance Fees Charged",
+      val: totalMaintenanceFees,
+      icon: Coins,
+      color: "text-amber-400",
     },
     {
       label: "Amount Collected",
@@ -360,6 +373,11 @@ const InvestmentDetails = () => {
             ) : (
               <span className={`text-xl font-bold font-mono ${item.color}`}>
                 {formatCurrency(item.val)}
+              </span>
+            )}
+            {item.detail && (
+              <span className="mt-1 text-[10px] font-medium text-slate-500">
+                {item.detail}
               </span>
             )}
           </div>

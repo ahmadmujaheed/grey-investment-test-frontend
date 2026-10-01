@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { message, Tag, Skeleton, Pagination } from "antd";
 import { Wallet, TrendingUp, ShieldCheck, Eye } from "lucide-react";
 import { fetchUserInvestments } from "../../api/investmentApi";
 
 const Investments = () => {
+  const navigate = useNavigate();
   const [investments, setInvestments] = useState([]);
   const [investmentsummary, setInvestmentsummary] = useState({
     totalPrincipal: 0,
@@ -130,10 +131,10 @@ const Investments = () => {
             <>
               {(() => {
                 const withdrawableInvestments = investments.filter(
-                  (inv) => Number(inv.withdrawableLimit || 0) > 0,
+                  (inv) => Number(inv.availableToWithdraw || 0) > 0,
                 );
                 const otherInvestments = investments.filter(
-                  (inv) => Number(inv.withdrawableLimit || 0) <= 0,
+                  (inv) => Number(inv.availableToWithdraw || 0) <= 0,
                 );
 
                 return (
@@ -147,7 +148,7 @@ const Investments = () => {
                               Withdrawable Investments
                             </h3>
                             <p className="text-[11px] text-slate-500 mt-0.5">
-                              Investments with a withdrawable limit set by the admin.
+                              Investments with a balance currently available for withdrawal.
                             </p>
                           </div>
                           <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 border border-emerald-400/15 px-2 py-1 rounded-full">
@@ -165,7 +166,16 @@ const Investments = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 8 }}
                                 transition={{ duration: 0.2 }}
-                                className="group relative border border-emerald-500/15 hover:border-emerald-500/35 bg-[#06070c] rounded-lg p-3 flex flex-col justify-between transition-all duration-200 shadow-lg"
+                                role="link"
+                                tabIndex={0}
+                                onClick={() => navigate("/user-dashboard/user-investments/investment/" + inv.investmentId)}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    navigate("/user-dashboard/user-investments/investment/" + inv.investmentId);
+                                  }
+                                }}
+                                className="group relative cursor-pointer border border-emerald-500/15 hover:border-emerald-500/35 bg-[#06070c] rounded-lg p-3 flex flex-col justify-between transition-all duration-200 shadow-lg"
                               >
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="min-w-0">
@@ -230,7 +240,7 @@ const Investments = () => {
                             Other Investments
                           </h3>
                           <p className="text-[11px] text-slate-500 mt-0.5">
-                            Investments that currently have no withdrawable limit.
+                            Investments with no balance currently available for withdrawal.
                           </p>
                         </div>
 
@@ -262,7 +272,16 @@ const Investments = () => {
                               {otherInvestments.map((inv) => (
                                 <tr
                                   key={inv.allocationId}
-                                  className="hover:bg-slate-900/30 transition-colors"
+                                  role="link"
+                                  tabIndex={0}
+                                  onClick={() => navigate("/user-dashboard/user-investments/investment/" + inv.investmentId)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                      event.preventDefault();
+                                      navigate("/user-dashboard/user-investments/investment/" + inv.investmentId);
+                                    }
+                                  }}
+                                  className="cursor-pointer hover:bg-slate-900/30 transition-colors"
                                 >
                                   <td className="px-4 py-3">
                                     <p className="text-xs font-semibold text-white">
