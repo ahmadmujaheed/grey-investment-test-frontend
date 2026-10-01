@@ -13,7 +13,7 @@ import { Skeleton } from "antd";
 import { useAuthStore } from "../../store/useAuthStore";
 import { fetchInvestorAnalytics } from "../../api/analyticsApi";
 import { fetchUserById } from "../../api/userApi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("en-NG", {
@@ -23,6 +23,7 @@ const formatCurrency = (amount = 0) =>
   }).format(Number(amount) || 0);
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
   // Adjusted State Schema to align directly with your API response payload
@@ -223,7 +224,19 @@ const Dashboard = () => {
                   return (
                     <tr
                       key={investment.allocationId}
-                      className="hover:bg-[#090A0F]/20 transition-all"
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Open ${investment.title || "investment"} details`}
+                      onClick={(event) => {
+                        if (event.target.closest("a, button")) return;
+                        navigate(`/user-dashboard/user-investments/investment/${investment.investmentId}`, { state: { allocationId: investment.allocationId } });
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                        event.preventDefault();
+                        navigate(`/user-dashboard/user-investments/investment/${investment.investmentId}`, { state: { allocationId: investment.allocationId } });
+                      }}
+                      className="cursor-pointer hover:bg-[#090A0F]/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#34D399]"
                     >
                       <td className="p-4 pl-6 font-bold text-white">
                         <div className="flex items-center gap-3">

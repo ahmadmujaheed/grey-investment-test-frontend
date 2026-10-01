@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { History, Plus, Trash2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { message, Skeleton } from "antd";
 import {
   fetchMaintenanceFeeHistory,
@@ -26,6 +27,7 @@ const createPayoutRow = () => ({
 });
 
 const MaintenanceFeeHistory = () => {
+  const navigate = useNavigate();
   const [report, setReport] = useState({
     summary: { accumulated: 0, paid: 0, remaining: 0 },
     investments: [],
@@ -144,7 +146,20 @@ const MaintenanceFeeHistory = () => {
             ) : (
               <>
                 {fundedInvestments.map((investment, index) => (
-                  <tr key={investment._id} className="hover:bg-[#111827]">
+                  <tr
+                    key={investment._id}
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Open ${investment.title} investment details`}
+                    onClick={() => navigate(`/dashboard/investment/${investment._id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/dashboard/investment/${investment._id}`);
+                      }
+                    }}
+                    className="cursor-pointer hover:bg-[#111827] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#34D399]"
+                  >
                     <td className="px-4 py-3 text-slate-500">{index + 1}</td>
                     <td className="px-4 py-3">
                       <p className="font-bold text-white">{investment.title}</p>

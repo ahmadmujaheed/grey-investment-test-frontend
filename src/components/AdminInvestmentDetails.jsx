@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { message, Modal, Popconfirm, Popover, Select, Tag } from "antd";
 import {
@@ -33,6 +33,7 @@ import {
 
 const AdminInvestmentDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [investmentDetails, setInvestmentDetails] = useState(null);
@@ -832,7 +833,21 @@ const AdminInvestmentDetails = () => {
               {investmentDetails?.investors?.map((investor, index) => (
                 <div
                   key={investor.allocationId || index}
-                  className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-[#111827]"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open full statement for ${investor.user?.name || "this investor"}`}
+                  onClick={(event) => {
+                    if (event.target.closest("button, a, input, select, [role='button']")) return;
+                    const userId = investor.user?._id || investor.user?.id;
+                    if (userId) navigate(`/dashboard/users/${userId}/investment/${id}`);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                    event.preventDefault();
+                    const userId = investor.user?._id || investor.user?.id;
+                    if (userId) navigate(`/dashboard/users/${userId}/investment/${id}`);
+                  }}
+                  className="grid grid-cols-12 gap-4 px-6 py-4 items-center cursor-pointer hover:bg-[#111827] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#34D399]"
                 >
                   <div className="col-span-2 flex items-center gap-3">
                     {/* <div className="w-8 h-8 rounded-full bg-[#090A0F] text-[#34D399] flex items-center justify-center font-bold text-sm">

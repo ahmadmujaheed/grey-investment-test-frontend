@@ -531,20 +531,20 @@ const Users = () => {
                 return (
                   <tr
                     key={user._id || user.id}
-                    onClick={() =>
+                    onClick={(event) => {
+                      if (event.target.closest("button, a, input, select, [role='button']")) return;
                       navigate(
                         `${currentUser?.role === "superadmin" ? "/superadmin/users" : "/dashboard/users"}/${user._id || user.id}`,
-                      )
-                    }
+                      );
+                    }}
                     tabIndex={0}
                     role="button"
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        navigate(
-                          `${currentUser?.role === "superadmin" ? "/superadmin/users" : "/dashboard/users"}/${user._id || user.id}`,
-                        );
-                      }
+                      if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                      event.preventDefault();
+                      navigate(
+                        `${currentUser?.role === "superadmin" ? "/superadmin/users" : "/dashboard/users"}/${user._id || user.id}`,
+                      );
                     }}
                     className="responsive-clickable-row hover:bg-[#090A0F]/40 transition-colors"
                   >
@@ -879,7 +879,26 @@ const Users = () => {
                           selectedUser.allocations.map((allocation) => (
                             <tr
                               key={allocation._id || allocation.id}
-                              className="bg-[#1F2937] hover:bg-[#111827]"
+                              role="link"
+                              tabIndex={0}
+                              aria-label={`Open ${selectedUser?.name || "investor"} statement for ${allocation.investment?.title || "this investment"}`}
+                              onClick={() => {
+                                const investmentId = allocation.investment?._id || allocation.investment?.id || allocation.investmentId;
+                                const userId = selectedUser?._id || selectedUser?.id;
+                                if (investmentId && userId) {
+                                  navigate(`${currentUser?.role === "superadmin" ? "/superadmin" : "/dashboard"}/users/${userId}/investment/${investmentId}`);
+                                }
+                              }}
+                              onKeyDown={(event) => {
+                                if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                                event.preventDefault();
+                                const investmentId = allocation.investment?._id || allocation.investment?.id || allocation.investmentId;
+                                const userId = selectedUser?._id || selectedUser?.id;
+                                if (investmentId && userId) {
+                                  navigate(`${currentUser?.role === "superadmin" ? "/superadmin" : "/dashboard"}/users/${userId}/investment/${investmentId}`);
+                                }
+                              }}
+                              className="bg-[#1F2937] cursor-pointer hover:bg-[#111827] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#34D399]"
                             >
                               <td className="px-4 py-3">
                                 <p className="font-bold text-white capitalize!">

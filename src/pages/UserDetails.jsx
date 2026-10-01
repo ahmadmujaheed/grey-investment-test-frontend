@@ -434,7 +434,24 @@ const UserDetails = () => {
               {allocations.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-500">No investment allocations.</td></tr>
               ) : allocations.map((allocation, index) => (
-                <tr key={allocation._id || allocation.id || index}>
+                <tr
+                  key={allocation._id || allocation.id || index}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open statement for ${allocation.investment?.title || "this investment"}`}
+                  onClick={(event) => {
+                    if (event.target.closest("a, button, input, select")) return;
+                    const investmentId = investmentIdOf(allocation);
+                    if (investmentId) navigate(`${isSuperAdmin ? "/superadmin" : "/dashboard"}/users/${id}/investment/${investmentId}`);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                    event.preventDefault();
+                    const investmentId = investmentIdOf(allocation);
+                    if (investmentId) navigate(`${isSuperAdmin ? "/superadmin" : "/dashboard"}/users/${id}/investment/${investmentId}`);
+                  }}
+                  className="cursor-pointer hover:bg-[#090A0F]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#34D399]"
+                >
                   <td className="px-4 py-3 font-bold text-white print:text-black">
                     <Link
                       to={`${isSuperAdmin ? "/superadmin" : "/dashboard"}/users/${id}/investment/${investmentIdOf(allocation)}`}
